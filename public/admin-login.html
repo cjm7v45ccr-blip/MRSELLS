@@ -143,7 +143,7 @@
       <form id="loginForm">
         <div class="form-group">
           <label for="email">Email Address</label>
-          <input type="email" id="email" placeholder="admin@novastore.com" required autocomplete="email" autofocus>
+          <input type="email" id="email" placeholder="Enter your email" required autocomplete="email" autofocus>
         </div>
         <div class="form-group">
           <label for="password">Password</label>
@@ -169,8 +169,8 @@
       const name = s.store_name || s.store_logo || 'Store';
       document.getElementById('storeName').textContent = name;
       document.title = name + ' -- Admin Login';
-      // Admin login always uses admin email
-      document.getElementById('email').placeholder = 'admin@novastore.com';
+      // Set placeholder to admin email hint from settings (never expose the real email in source)
+      document.getElementById('email').placeholder = s.admin_email ? 'Enter admin email' : 'Enter your email';
     }).catch(() => {});
 
     const form = document.getElementById('loginForm');

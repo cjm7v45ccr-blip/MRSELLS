@@ -2,14 +2,10 @@ node_modules/
 .env
 store.db
 uploads/
+uploads
+*.db
+*.db-wal
+*.db-shm
+*.bak
 .DS_Store
-</path>
-<task_progress>
-- [x] Check if git repo is initialized
-- [x] Ensure server.js is production-ready
-- [x] Create .gitignore
-- [ ] Initialize git repo and commit
-- [ ] Push to GitHub
-- [ ] Provide Render deployment steps
-</task_progress>
-</write_to_file>
+settings.json

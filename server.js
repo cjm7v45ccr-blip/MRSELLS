@@ -15,12 +15,26 @@ require('dotenv').config();
 // Configuration
 // ============================
 const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || 'nova-store-jwt-secret';
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@novastore.com';
-const ADMIN_PASSWORD_HASH = bcrypt.hashSync(process.env.ADMIN_PASSWORD || 'Admin123!', 10);
+const NODE_ENV = process.env.NODE_ENV || 'development';
+
+// ---- REQUIRED ENV VARS (app will refuse to start without them) ----
+function requireEnv(name) {
+  const val = process.env[name];
+  if (!val || val.trim() === '') {
+    console.error(`\n  FATAL: Environment variable "${name}" is not set.\n  Copy .env.example to .env and fill in secure values.\n  See .env.example for instructions.\n`);
+    process.exit(1);
+  }
+  return val;
+}
+
+const JWT_SECRET = requireEnv('JWT_SECRET');
+const ADMIN_EMAIL = requireEnv('ADMIN_EMAIL');
+const ADMIN_PASSWORD_RAW = requireEnv('ADMIN_PASSWORD');
+const ADMIN_PASSWORD_HASH = bcrypt.hashSync(ADMIN_PASSWORD_RAW, 12);
+
+const CORS_ORIGIN = process.env.CORS_ORIGIN || '';
 const UPLOAD_DIR = process.env.UPLOAD_DIR || 'uploads';
 const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE) || 5 * 1024 * 1024;
-const NODE_ENV = process.env.NODE_ENV || 'development';
 const DB_PATH = path.join(__dirname, process.env.DB_PATH || 'store.db');
 const UPLOAD_PATH = path.join(__dirname, UPLOAD_DIR);
 const SETTINGS_PATH = path.join(__dirname, 'settings.json');
@@ -714,13 +728,29 @@ const upload = multer({
 // ============================
 const app = express();
 
-// Security — allow external images and scripts
+// Security headers — strict CSP, allow only necessary inline scripts
 app.use(helmet({
-  contentSecurityPolicy: false,
-  crossOriginEmbedderPolicy: false
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      imgSrc: ["'self'", "data:", "https:", "http:"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      connectSrc: ["'self'"],
+      frameSrc: ["'none'"],
+      objectSrc: ["'none'"]
+    }
+  },
+  crossOriginEmbedderPolicy: false,
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  hsts: NODE_ENV === 'production' ? { maxAge: 31536000, includeSubDomains: true } : false
 }));
-app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+app.use(cors({
+  origin: CORS_ORIGIN ? CORS_ORIGIN.split(',').map(o => o.trim()) : false,
+  credentials: true
+}));
+app.use(express.json({ limit: '1mb' }));
 app.use(morgan(NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 // Rate limiting (generous limits for development)
