@@ -16,8 +16,8 @@ require('dotenv').config();
 // ============================
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'nova-store-jwt-secret';
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@novastore.com';
-const ADMIN_PASSWORD_HASH = bcrypt.hashSync(process.env.ADMIN_PASSWORD || 'Admin123!', 10);
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'support.essence26@gmail.com';
+const ADMIN_PASSWORD_HASH = bcrypt.hashSync(process.env.ADMIN_PASSWORD || '071211in2026', 10);
 const UPLOAD_DIR = process.env.UPLOAD_DIR || 'uploads';
 const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE) || 5 * 1024 * 1024;
 const NODE_ENV = process.env.NODE_ENV || 'development';
