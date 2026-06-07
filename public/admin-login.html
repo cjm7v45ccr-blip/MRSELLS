@@ -166,7 +166,7 @@
   <script>
     // Load store name from database
     fetch('/api/settings').then(r => r.json()).then(s => {
-      const name = s.store_name || s.store_logo || ; 'Store';
+      const name = s.store_name || s.store_logo || 'Store';
       document.getElementById('storeName').textContent = name;
       document.title = name + ' -- Admin Login';
       // Admin login always uses admin email
