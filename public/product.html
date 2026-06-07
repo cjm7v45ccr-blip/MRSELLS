@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="pageTitle">Product</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/product.css">
+</head>
+<body data-page-title="Product">
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="/" class="logo">
+        <span id="storeLogoText">MRSELLS</span>
+      </a>
+      <div class="nav-links" id="navLinks">
+        <a href="/">Home</a>
+        <a href="/#products">Shop</a>
+        <a href="/#contact">Contact</a>
+      </div>
+      <div class="nav-actions">
+        <button class="icon-btn" id="cartToggle" aria-label="Open cart">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          <span class="cart-badge" id="cartBadge">0</span>
+        </button>
+        <button class="icon-btn menu-toggle" id="menuToggle" aria-label="Toggle menu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <div class="cart-sidebar" id="cartSidebar">
+    <div class="cart-header">
+      <h2>Your Cart</h2>
+      <button id="closeCart" aria-label="Close cart">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="cart-items" id="cartItems"></div>
+    <div class="cart-footer">
+      <div class="cart-coupon" id="couponSection" style="display:none;">
+        <div class="coupon-row">
+          <input type="text" id="couponInput" placeholder="Enter coupon code" class="coupon-input">
+          <button class="btn btn-sm btn-primary" id="applyCouponBtn">Apply</button>
+        </div>
+        <div id="couponMessage" class="coupon-message"></div>
+      </div>
+      <div class="cart-total">
+        <div class="cart-total-row" id="discountRow" style="display:none;">
+          <span>Discount</span>
+          <span id="discountAmount" style="color:#059669;">-$0.00</span>
+        </div>
+        <div class="cart-total-row">
+          <span>Total</span>
+          <span id="cartTotal">$0.00</span>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block" id="checkoutBtn" disabled>Checkout</button>
+    </div>
+  </div>
+
+  <main class="product-page">
+    <div class="container">
+      <div class="product-crumbs" id="productBreadcrumbs">
+        <a href="/">Home</a>
+        <span>/</span>
+        <a href="/#products">Shop</a>
+        <span>/</span>
+        <span id="breadcrumbProduct">Product</span>
+      </div>
+
+      <div id="notFoundState" class="not-found-state" style="display:none;">
+        <div class="not-found-card">
+          <i class="fa-solid fa-box-open"></i>
+          <h1>Product not found</h1>
+          <p>We could not find that item, but the store is still open for browsing.</p>
+          <a class="btn btn-primary" href="/#products">Back to Shop</a>
+        </div>
+      </div>
+
+      <section id="productState" class="product-state" style="display:none;">
+        <div class="product-hero">
+          <div class="product-gallery-card">
+            <div class="product-image-frame">
+              <span class="product-image-chip" id="productBadge">Featured</span>
+              <img id="productImage" src="" alt="" class="product-main-image">
+            </div>
+            <div id="productThumbnails" class="product-thumbnails" style="display:none;margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;"></div>
+            <div class="trust-strip">
+              <div class="trust-item">
+                <i class="fa-solid fa-truck-fast"></i>
+                <div>
+                  <strong>Fast shipping</strong>
+                  <span>Orders processed quickly</span>
+                </div>
+              </div>
+              <div class="trust-item">
+                <i class="fa-solid fa-shield-heart"></i>
+                <div>
+                  <strong>Secure checkout</strong>
+                  <span>Protected order form</span>
+                </div>
+              </div>
+              <div class="trust-item">
+                <i class="fa-solid fa-rotate-left"></i>
+                <div>
+                  <strong>Easy returns</strong>
+                  <span>Support if something is off</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <aside class="purchase-card">
+            <div class="sales-final-notice" id="salesFinalBanner" style="display:none;">
+              <i class="fa-solid fa-gavel"></i>
+              <span id="salesFinalText">All sales are final.</span>
+            </div>
+            <span class="purchase-category" id="productCategory">Category</span>
+            <h1 id="productName">Product name</h1>
+            <div class="purchase-meta">
+              <span class="stars" id="productRatingStars"><i class="fa-solid fa-star"></i> <span id="ratingAverage">0</span> <small id="ratingCount">(0 reviews)</small></span>
+              <span id="productAvailability" class="availability">In stock</span>
+            </div>
+            
+            <!-- Variant Selectors -->
+            <div id="colorSelector" class="variant-selector" style="display:none;">
+              <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:8px;">Color: <span id="selectedColorName"></span></label>
+              <div class="color-swatches" id="colorSwatches"></div>
+            </div>
+            <div id="sizeSelector" class="variant-selector" style="display:none;">
+              <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:8px;">Size: <span id="selectedSizeName"></span></label>
+              <div class="size-options" id="sizeOptions"></div>
+            </div>
+            
+            <div class="price-row">
+              <span id="productPrice" class="current-price">$0.00</span>
+              <span id="productCompare" class="compare-price"></span>
+              <span id="discountChip" class="discount-chip" style="display:none;"></span>
+            </div>
+            <p id="productShortDescription" class="short-description"></p>
+
+            <div class="quantity-row">
+              <span>Quantity</span>
+              <div class="quantity-control">
+                <button type="button" id="qtyMinus">-</button>
+                <span id="quantityValue">1</span>
+                <button type="button" id="qtyPlus">+</button>
+              </div>
+            </div>
+
+            <div class="purchase-actions">
+              <button type="button" class="btn btn-primary btn-block" id="addToCartBtn">Add to Cart</button>
+              <button type="button" class="btn btn-outline btn-block" id="buyNowBtn">Buy Now</button>
+            </div>
+
+            <div class="sku-grid">
+              <div class="sku-item">
+                <span>SKU</span>
+                <strong id="productSku">#0</strong>
+              </div>
+              <div class="sku-item">
+                <span>Category</span>
+                <strong id="productCategoryName">General</strong>
+              </div>
+              <div class="sku-item">
+                <span>Stock</span>
+                <strong id="productStockCount">0 units</strong>
+              </div>
+              <div class="sku-item">
+                <span>Badge</span>
+                <strong id="productBadgeText">Top seller</strong>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <div class="details-layout">
+          <section class="content-card">
+            <div class="tab-buttons">
+              <button class="tab-button active" data-tab="description">Description</button>
+              <button class="tab-button" data-tab="details">Details</button>
+              <button class="tab-button" data-tab="shipping">Shipping</button>
+            </div>
+
+            <div class="tab-panel active" id="tab-description">
+              <p id="productDescription"></p>
+            </div>
+            <div class="tab-panel" id="tab-details">
+              <ul id="detailsList" class="details-list"></ul>
+            </div>
+            <div class="tab-panel" id="tab-shipping">
+              <div class="shipping-grid">
+                <div class="shipping-card">
+                  <strong>Delivery</strong>
+                  <p id="policyShippingText">We process orders as quickly as possible.</p>
+                </div>
+                <div class="shipping-card">
+                  <strong>Returns</strong>
+                  <p id="policyReturnsText">All sales are final.</p>
+                </div>
+                <div class="shipping-card">
+                  <strong>Support</strong>
+                  <p id="policySupportText">Contact our customer support team for any issues.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <aside class="content-card accent-card">
+            <span class="section-kicker">Important Notice</span>
+            <h2>All Sales Are Final</h2>
+            <p id="promiseSalesFinal">All sales are final. If you have a real issue with your order, please contact our customer support team.</p>
+            <div class="promise-list" id="promiseList"></div>
+            <div class="support-contact-box" style="margin-top:16px;padding:14px;background:rgba(124,58,237,0.08);border-radius:8px;border:1px solid rgba(124,58,237,0.15);">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                <i class="fa-solid fa-headset" style="color:var(--accent);font-size:1.1rem;"></i>
+                <strong style="font-size:0.9rem;">Need Help? Contact Support</strong>
+              </div>
+              <p id="supportContactInfo" style="font-size:0.82rem;color:var(--text-light);margin:0;">If you have a real issue with your order, please reach out to our customer support team. We are here to help.</p>
+            </div>
+          </aside>
+        </div>
+
+        <section class="related-section">
+          <div class="section-header">
+            <div>
+              <span class="section-tag">Related Products</span>
+              <h2>More to Explore</h2>
+            </div>
+          </div>
+          <div class="related-grid" id="relatedGrid"></div>
+        </section>
+
+        <section class="faq-section">
+          <div class="section-header">
+            <div>
+              <span class="section-tag">Shopping Help</span>
+              <h2>Common Questions</h2>
+            </div>
+          </div>
+          <div class="faq-grid" id="faqGrid">
+            <div class="faq-card">
+              <strong>Can I add more than one item?</strong>
+              <p>Yes. Use the quantity controls before adding to cart, then continue shopping or check out when you're ready.</p>
+            </div>
+            <div class="faq-card">
+              <strong>How do I get updates?</strong>
+              <p>After placing an order, you can check your order status and tracking details from your account profile.</p>
+            </div>
+            <div class="faq-card">
+              <strong>Is checkout secure?</strong>
+              <p>Orders are collected through the site's checkout form and stored in the admin panel for fulfillment.</p>
+            </div>
+          </div>
+        </section>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom" style="border-top:none;padding-top:0;">
+        <p>&copy; <span id="footerYear">2026</span> <span id="storeLogoTextFooter2">Store</span>. All rights reserved.</p>
+        <div class="footer-links-inline">
+          <a href="/">Home</a>
+          <a href="/#products">Shop</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <div class="modal-overlay" id="checkoutModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Checkout</h2>
+        <button class="modal-close" id="closeCheckout">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <form id="checkoutForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="customerName">Full Name *</label>
+            <input type="text" id="customerName" required>
+          </div>
+          <div class="form-group">
+            <label for="customerEmail">Email *</label>
+            <input type="email" id="customerEmail" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="customerPhone">Phone</label>
+            <input type="tel" id="customerPhone">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="shippingAddress">Shipping Address *</label>
+          <input type="text" id="shippingAddress" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="city">City *</label>
+            <input type="text" id="city" required>
+          </div>
+          <div class="form-group">
+            <label for="state">State *</label>
+            <input type="text" id="state" required>
+          </div>
+          <div class="form-group">
+            <label for="zipCode">ZIP Code *</label>
+            <input type="text" id="zipCode" required>
+          </div>
+        </div>
+        <div class="checkout-summary">
+          <h3>Order Summary</h3>
+          <div id="checkoutItems"></div>
+          <div class="checkout-total">
+            <span>Total</span>
+            <span id="checkoutTotal">$0.00</span>
+          </div>
+        </div>
+        <div class="payment-selector" id="paymentSelector">
+          <h3>Payment Method</h3>
+          <div id="paymentOptions"></div>
+          <div class="payment-instructions" id="paymentInstructions"></div>
+        </div>
+        <div class="sales-final-notice" id="checkoutSalesNotice" style="display:none;margin-bottom:12px;">
+          <i class="fa-solid fa-gavel"></i>
+          <span id="checkoutSalesText">All sales are final.</span>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Place Order</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">
+    <div>
+      <strong id="toastTitle">Notice</strong>
+      <p id="toastMessage">Message</p>
+    </div>
+  </div>
+
+  <script src="/product.js"></script>
+</body>
+</html>

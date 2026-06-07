@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="pageTitle">Home</title>
+  <meta name="description" content="Premium products curated for modern living. Quality you can trust.">
+  <meta property="og:title" content="Store">
+  <meta property="og:description" content="Premium products curated for modern living.">
+  <meta property="og:type" content="website">
+  <meta name="robots" content="index, follow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page-title="Home">
+  <!-- Navigation -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="/" class="logo">
+        <span id="storeLogoText">MRSELLS</span>
+      </a>
+      <div class="nav-links" id="navLinks">
+        <a href="#home" class="active">Home</a>
+        <a href="#categories">Categories</a>
+        <a href="#products">Shop</a>
+        <a href="#" id="navAiBtn" onclick="openAiPanel(event)"><i class="fas fa-sparkles" style="margin-right:4px;font-size:0.8rem;"></i>AI Assistant</a>
+        <a href="#contact">Contact</a>
+      </div>
+      <div class="nav-actions">
+        <div class="nav-search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="searchInput" placeholder="Search products..." autocomplete="off">
+        </div>
+        <div id="authContainer"></div>
+        <a href="/my-orders" class="icon-btn" id="ordersBtn" title="My Orders" aria-label="My Orders" style="display:none;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        </a>
+        <button class="icon-btn" id="cartToggle" aria-label="Open cart">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          <span class="cart-badge" id="cartBadge">0</span>
+        </button>
+        <button class="icon-btn menu-toggle" id="menuToggle" aria-label="Toggle menu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Cart Sidebar -->
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <div class="cart-sidebar" id="cartSidebar">
+    <div class="cart-header">
+      <h2>Your Cart</h2>
+      <button id="closeCart" title="Close cart">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="cart-items" id="cartItems">
+      <div class="cart-empty">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <p>Your cart is empty</p>
+      </div>
+    </div>
+    <div class="cart-footer">
+      <div class="cart-coupon" id="couponSection" style="display:none;">
+        <div class="coupon-row">
+          <input type="text" id="couponInput" placeholder="Enter coupon code" class="coupon-input">
+          <button class="btn btn-sm btn-primary" id="applyCouponBtn">Apply</button>
+        </div>
+        <div id="couponMessage" class="coupon-message"></div>
+      </div>
+      <div class="cart-total">
+        <div class="cart-total-row" id="discountRow" style="display:none;">
+          <span>Discount</span>
+          <span id="discountAmount" style="color:#059669;">-$0.00</span>
+        </div>
+        <div class="cart-total-row">
+          <span>Total</span>
+          <span id="cartTotal">$0.00</span>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block" id="checkoutBtn" disabled>Checkout</button>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <main>
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+      <div class="container hero-grid">
+        <div class="hero-content">
+          <span class="hero-badge" id="heroBadge">New Collection</span>
+          <h1 class="hero-title" id="heroTitle">Premium Products, Exceptional Quality</h1>
+          <p class="hero-subtitle" id="heroSubtitle">Discover curated collections from top brands.</p>
+          <div class="hero-actions">
+            <a href="#products" class="btn btn-primary btn-lg">Shop Now</a>
+            <a href="#categories" class="btn btn-outline btn-lg">Browse Categories</a>
+          </div>
+          <div class="hero-stats">
+            <div><strong id="heroProductCount">0</strong><span>Products</span></div>
+            <div><strong id="heroCategoryCount">0</strong><span>Categories</span></div>
+            <div><strong>Fast</strong><span>Shipping</span></div>
+            <div><strong>Secure</strong><span>Checkout</span></div>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <div class="hero-card hero-card-1" id="heroCard1">
+            <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600" alt="Featured product" loading="lazy">
+            <div class="hero-card-body">
+              <strong>Top Pick</strong>
+              <span>Premium sound</span>
+            </div>
+          </div>
+          <div class="hero-card hero-card-2" id="heroCard2">
+            <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600" alt="Featured product" loading="lazy">
+            <div class="hero-card-body">
+              <strong>New Arrival</strong>
+              <span>Limited edition</span>
+            </div>
+          </div>
+          <div class="hero-card hero-card-3" id="heroCard3">
+            <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600" alt="Featured product" loading="lazy">
+            <div class="hero-card-body">
+              <strong>Trending</strong>
+              <span>Most loved</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Categories Section -->
+    <section class="categories" id="categories">
+      <div class="container">
+        <div class="section-header">
+          <div>
+            <span class="section-tag">Browse</span>
+            <h2 class="section-title">Shop by Category</h2>
+            <p class="section-subtitle">Find what you need from our carefully curated collections.</p>
+          </div>
+        </div>
+        <div class="categories-grid" id="categoriesGrid">
+          <div class="category-skeleton"></div>
+          <div class="category-skeleton"></div>
+          <div class="category-skeleton"></div>
+          <div class="category-skeleton"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Products Section -->
+    <section class="products" id="products">
+      <div class="container">
+        <div class="section-header products-header">
+          <div>
+            <span class="section-tag">Catalog</span>
+            <h2 class="section-title" id="productsTitle">All Products</h2>
+            <p class="section-subtitle" id="productsSubtitle">Browse our complete selection of premium products.</p>
+          </div>
+          <div class="products-toolbar">
+            <div class="filter-tabs" id="filterTabs">
+              <button class="filter-tab active" data-category="all">All</button>
+            </div>
+            <div class="search-sort">
+              <select id="sortSelect" class="sort-select" aria-label="Sort">
+                <option value="newest">Newest</option>
+                <option value="price_asc">Price: Low to High</option>
+                <option value="price_desc">Price: High to Low</option>
+                <option value="name">Name: A–Z</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="products-grid" id="productsGrid">
+          <div class="product-skeleton"></div>
+          <div class="product-skeleton"></div>
+          <div class="product-skeleton"></div>
+          <div class="product-skeleton"></div>
+          <div class="product-skeleton"></div>
+          <div class="product-skeleton"></div>
+          <div class="product-skeleton"></div>
+          <div class="product-skeleton"></div>
+        </div>
+        <div id="pagination" class="pagination-wrap"></div>
+      </div>
+    </section>
+
+    <!-- AI Section anchor (legacy) -->
+    <section class="ai-section" id="ai" style="display:none;"></section>
+
+    <!-- ===== Full-Screen AI Assistant Page ===== -->
+    <div class="ai-fullscreen-overlay" id="aiFullscreenOverlay">
+      <div class="ai-fullscreen" id="aiFullscreen">
+        <!-- Scrollable AI Canvas -->
+        <div class="ai-canvas" id="aiCanvas">
+          <!-- Content area — text flows directly on page background -->
+          <div class="ai-content-panel">
+            <!-- Active search term header -->
+            <div class="ai-canvas-header" id="aiCanvasHeader" style="display:none;">
+              <span class="ai-active-search" id="aiActiveSearch"></span>
+            </div>
+            <!-- Filter pills row -->
+            <div class="ai-filter-row" id="aiFilterRow">
+              <button class="ai-filter-pill" data-query="Show products available">Sells from 🇺🇸</button>
+              <button class="ai-filter-pill" data-query="Show me deals and discounts">Your deals</button>
+              <button class="ai-filter-pill" data-query="Show featured products">Following</button>
+              <button class="ai-filter-pill" data-query="Show newest products">New arrivals</button>
+              <button class="ai-filter-pill" data-query="Show popular products">Best rated</button>
+              <button class="ai-filter-pill" data-query="Show products on sale">Price drop</button>
+            </div>
+            <!-- AI Results Output -->
+            <div class="ai-results" id="aiResult">
+              <div class="ai-welcome">
+                <div class="ai-welcome-icon"><i class="fas fa-sparkles"></i></div>
+                <h2>AI Shopping Assistant</h2>
+                <p>Ask me anything about products, deals, recommendations, or categories. I will help you find exactly what you need.</p>
+                <div class="ai-welcome-chips">
+                  <button class="ai-chip" data-query="Show me featured products">
+                    <i class="fa-solid fa-star"></i> Featured Products
+                  </button>
+                  <button class="ai-chip" data-query="What's on sale right now?">
+                    <i class="fa-solid fa-tag"></i> Best Deals
+                  </button>
+                  <button class="ai-chip" data-query="Show me electronics">
+                    <i class="fa-solid fa-laptop"></i> Electronics
+                  </button>
+                  <button class="ai-chip" data-query="Surprise me with recommendations">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Surprise Me
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sticky bottom input bar -->
+        <div class="ai-bottom-bar" id="aiBottomBar">
+          <div class="ai-bottom-inner">
+            <div class="ai-input-row">
+              <input type="text" id="aiInput" class="ai-input" placeholder="Ask anything..." autocomplete="off">
+              <button class="ai-send" id="aiSend" aria-label="Send">
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Persistent bottom chat bar (visible on all pages) -->
+    <div class="persistent-chat-bar" id="persistentChatBar">
+      <div class="persistent-chat-inner">
+        <div class="persistent-chat-row">
+          <input type="text" id="persistentChatInput" class="persistent-chat-input" placeholder="Ask anything about products, deals, or categories..." autocomplete="off">
+          <button class="persistent-chat-send" id="persistentChatSend" aria-label="Ask AI">
+            <i class="fas fa-sparkles"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contact Section -->
+</replace_in>
+<task_progress>
+- [x] Analyze existing codebase
+- [x] Add full-screen AI page HTML
+- [x] Rewrite AI CSS for full-screen document-style layout
+- [x] Fix corrupted CSS
+- [x] Update app.js to manage full-screen AI view toggle
+- [x] Break styles.css into smaller modular files in /public/css/
+- [x] Break app.js into smaller modular files in /public/js/ (utils.js, ai.js)
+- [x] Fix AI response quality (add conversation memory, remove fluff, fix chips)
+- [ ] Make store name sync from admin settings everywhere (fix hardcoded MRSELLS)
+- [ ] Make chat bar persistent throughout site
+- [ ] Verify all files load correctly
+</task_progress>
+    <section class="contact" id="contact">
+      <div class="container">
+        <div class="section-header">
+          <div>
+            <span class="section-tag">Get in touch</span>
+            <h2 class="section-title">Contact Us</h2>
+            <p class="section-subtitle">Questions, feedback, or need help? We are here for you.</p>
+          </div>
+        </div>
+        <div class="contact-grid">
+          <div class="contact-card">
+            <div class="contact-icon"><i class="fa-solid fa-envelope"></i></div>
+            <h3>Email</h3>
+            <p id="contactEmail">support@novastore.com</p>
+          </div>
+          <div class="contact-card">
+            <div class="contact-icon"><i class="fa-solid fa-phone"></i></div>
+            <h3>Phone</h3>
+            <p id="contactPhone">+1 (555) 123-4567</p>
+          </div>
+          <div class="contact-card">
+            <div class="contact-icon"><i class="fa-solid fa-location-dot"></i></div>
+            <h3>Address</h3>
+            <p id="contactAddress">123 Commerce St, San Francisco, CA</p>
+          </div>
+        </div>
+        <div class="newsletter" id="newsletterSection" style="display:none;">
+          <h3>Stay in the loop</h3>
+          <p>Subscribe to our newsletter for the latest products, deals, and updates.</p>
+          <form id="newsletterForm" class="newsletter-form">
+            <input type="email" id="newsletterEmail" placeholder="Enter your email" required>
+            <button type="submit" class="btn btn-primary">Subscribe</button>
+          </form>
+          <div id="newsletterMessage" class="newsletter-message"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="/" class="logo">
+            <span id="storeLogoTextFooter">MRSELLS</span>
+          </a>
+          <p id="footerDescription">Premium products curated for modern living. Quality you can trust.</p>
+          <div class="social-links" id="socialLinks">
+            <a href="#" aria-label="Facebook" id="socialFacebook" target="_blank" rel="noopener">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+            </a>
+            <a href="#" aria-label="Instagram" id="socialInstagram" target="_blank" rel="noopener">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+            </a>
+            <a href="#" aria-label="Twitter" id="socialTwitter" target="_blank" rel="noopener">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/></svg>
+            </a>
+            <a href="#" aria-label="LinkedIn" id="socialLinkedin" target="_blank" rel="noopener">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+            </a>
+          </div>
+        </div>
+        <div class="footer-links">
+          <h4>Quick Links</h4>
+          <a href="#products">Shop All</a>
+          <a href="#categories">Categories</a>
+          <a href="/my-orders" id="footerMyOrders" style="display:none;">My Orders</a>
+        </div>
+        <div class="footer-links">
+          <h4>Customer Service</h4>
+          <a href="#contact">Contact Us</a>
+          <a href="#ai">AI Assistant</a>
+        </div>
+        <div class="footer-links">
+          <h4>Company</h4>
+          <a href="#home">About</a>
+          <a href="#home">Careers</a>
+          <a href="#home">Privacy Policy</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; <span id="footerYear">2026</span> <span id="storeLogoTextFooter2">MRSELLS</span>. All rights reserved.</p>
+        <div class="payment-methods">
+          <svg width="38" height="24" viewBox="0 0 38 24" fill="none"><rect width="38" height="24" rx="4" fill="#1a1f71"/><path d="M15.5 8l-4 8h-3l-1.5-4.5c-.2-.5-.4-1-.5-1.3v-2.2h4v3l2.5-3h3.5v3l2-3h2.5l-3 4 3 4h-2.5l-2-3z" fill="#fff"/></svg>
+          <svg width="38" height="24" viewBox="0 0 38 24" fill="none"><rect width="38" height="24" rx="4" fill="#eb001b"/><path d="M16 8h6v8h-6z" fill="#f79e1b"/><path d="M17 12a5 5 0 0 1 1.9-3.9 5 5 0 0 0 0 7.8A5 5 0 0 1 17 12z" fill="#ff5f00"/></svg>
+          <svg width="38" height="24" viewBox="0 0 38 24" fill="none"><rect width="38" height="24" rx="4" fill="#1434cb"/><path d="M20 16V8h3.5c1.5 0 2.5.8 2.5 2.2 0 .8-.4 1.3-.8 1.6.5.2 1 .7 1 1.6 0 1.5-1.1 2.6-2.7 2.6H20zm2.3-4.8h.8c.7 0 1.1-.3 1.1-.9s-.4-.9-1.1-.9h-.8v1.8zm0 3.2h1c.8 0 1.2-.4 1.2-1 0-.6-.4-1-1.2-1h-1v2z" fill="#fff"/></svg>
+          <svg width="38" height="24" viewBox="0 0 38 24" fill="none"><rect width="38" height="24" rx="4" fill="#003087"/><path d="M13 16V8h3.5c1.5 0 2.5.8 2.5 2.2 0 .8-.4 1.3-.8 1.6.5.2 1 .7 1 1.6 0 1.5-1.1 2.6-2.7 2.6H13zm2.3-4.8h.8c.7 0 1.1-.3 1.1-.9s-.4-.9-1.1-.9h-.8v1.8zm0 3.2h1c.8 0 1.2-.4 1.2-1 0-.6-.4-1-1.2-1h-1v2z" fill="#fff"/></svg>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Auth Modal -->
+  <div class="modal-overlay" id="authModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>My Account</h2>
+        <button class="modal-close" onclick="closeAuthModal()" title="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login" onclick="switchAuthTab('login')">Sign In</button>
+        <button class="auth-tab" data-tab="register" onclick="switchAuthTab('register')">Register</button>
+      </div>
+      <form id="authLoginForm" class="auth-form active">
+        <div class="form-group">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" required>
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" required>
+        </div>
+        <div id="loginError" class="form-error"></div>
+        <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+      </form>
+      <form id="authRegisterForm" class="auth-form">
+        <div class="form-group">
+          <label for="registerName">Full Name</label>
+          <input type="text" id="registerName" required>
+        </div>
+        <div class="form-group">
+          <label for="registerEmail">Email</label>
+          <input type="email" id="registerEmail" required>
+        </div>
+        <div class="form-group">
+          <label for="registerPassword">Password (min 6 characters)</label>
+          <input type="password" id="registerPassword" required minlength="6">
+        </div>
+        <div id="registerError" class="form-error"></div>
+        <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Checkout Modal -->
+  <div class="modal-overlay" id="checkoutModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Checkout</h2>
+        <button class="modal-close" id="closeCheckout" title="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <form id="checkoutForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="customerName">Full Name *</label>
+            <input type="text" id="customerName" required>
+          </div>
+          <div class="form-group">
+            <label for="customerEmail">Email *</label>
+            <input type="email" id="customerEmail" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="customerPhone">Phone</label>
+            <input type="tel" id="customerPhone">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="shippingAddress">Shipping Address *</label>
+          <input type="text" id="shippingAddress" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="city">City *</label>
+            <input type="text" id="city" required>
+          </div>
+          <div class="form-group">
+            <label for="state">State *</label>
+            <input type="text" id="state" required>
+          </div>
+          <div class="form-group">
+            <label for="zipCode">ZIP Code *</label>
+            <input type="text" id="zipCode" required>
+          </div>
+        </div>
+        <div class="checkout-summary">
+          <h3>Order Summary</h3>
+          <div id="checkoutItems"></div>
+          <div class="checkout-total">
+            <span>Total</span>
+            <span id="checkoutTotal">$0.00</span>
+          </div>
+        </div>
+        <div class="payment-selector" id="paymentSelector">
+          <h3>Payment Method</h3>
+          <div id="paymentOptions"></div>
+          <div class="payment-instructions" id="paymentInstructions"></div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Place Order</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Profile Modal -->
+  <div class="modal-overlay" id="profileModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>My Profile</h2>
+        <button class="modal-close" onclick="closeProfileModal()" title="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <form id="profileForm">
+        <div class="profile-header-info" style="text-align:center;margin-bottom:20px;">
+          <div style="width:72px;height:72px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.8rem;font-weight:700;margin:0 auto 12px;" id="profileAvatar">U</div>
+          <div style="font-size:0.85rem;color:var(--text-light);">Member since <span id="profileMemberSince">—</span></div>
+          <div id="profileTrackingInfo" style="margin-top:12px;text-align:left;font-size:0.85rem;"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="profileName">Full Name</label>
+            <input type="text" id="profileName" required>
+          </div>
+          <div class="form-group">
+            <label for="profileEmail">Email</label>
+            <input type="email" id="profileEmail" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="profilePhone">Phone</label>
+          <input type="tel" id="profilePhone">
+        </div>
+        <div class="form-group">
+          <label for="profileAddress">Shipping Address</label>
+          <input type="text" id="profileAddress">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="profileCity">City</label>
+            <input type="text" id="profileCity">
+          </div>
+          <div class="form-group">
+            <label for="profileState">State</label>
+            <input type="text" id="profileState">
+          </div>
+          <div class="form-group">
+            <label for="profileZip">ZIP Code</label>
+            <input type="text" id="profileZip">
+          </div>
+        </div>
+        <div id="profileError" class="form-error"></div>
+        <div id="profileSuccess" class="form-success" style="display:none;color:#059669;font-size:0.85rem;margin-bottom:12px;">Profile updated successfully!</div>
+        <button type="submit" class="btn btn-primary btn-block">Save Profile</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Success Toast -->
+  <div class="toast" id="toast">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    <div>
+      <strong id="toastTitle">Success!</strong>
+      <p id="toastMessage">Item added to cart.</p>
+    </div>
+  </div>
+
+  <div class="ai-panel" id="aiPanel" aria-hidden="true">
+    <div class="ai-panel-header">
+      <div class="ai-panel-header-info">
+        <div class="ai-panel-avatar" id="aiPanelAvatar"><i class="fas fa-sparkles"></i></div>
+        <div>
+          <h2 id="aiPanelTitle">AI Assistant</h2>
+          <p><span class="ai-panel-dot"></span> <span id="aiPanelStatus">Online</span></p>
+        </div>
+      </div>
+      <div class="ai-panel-header-actions">
+        <button class="ai-panel-action" onclick="clearAiConversation()" title="Clear conversation" aria-label="Clear conversation">
+          <i class="fas fa-rotate-right"></i>
+        </button>
+        <button class="ai-panel-action" onclick="toggleAiPanel()" title="Close" aria-label="Close AI Assistant">
+          <i class="fas fa-xmark"></i>
+        </button>
+      </div>
+    </div>
+    <div class="ai-panel-messages" id="aiPanelMessages">
+      <!-- Messages rendered here -->
+    </div>
+    <div class="ai-panel-quick" id="aiPanelQuick">
+      <!-- Quick action chips -->
+    </div>
+    <div class="ai-panel-input">
+      <textarea id="aiPanelInput" placeholder="Ask me anything — products, orders, returns..." rows="1" autocomplete="off"></textarea>
+      <button class="ai-panel-send" id="aiPanelSend" onclick="sendAiPanelMessage()" aria-label="Send">
+        <i class="fas fa-paper-plane"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Modular JS files (order matters) -->
+  <script src="js/utils.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="pageTitle">My Orders</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* My Orders Page Styles */
+    .orders-page {
+      min-height: 100vh;
+      padding-top: 100px;
+      padding-bottom: 60px;
+    }
+    .orders-page .container {
+      max-width: 900px;
+    }
+    .orders-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .orders-header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+    .orders-header .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-light);
+      font-size: 0.9rem;
+      transition: var(--transition);
+    }
+    .orders-header .back-link:hover {
+      color: var(--accent);
+    }
+    .orders-list {
+      display: grid;
+      gap: 20px;
+    }
+    .order-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg);
+      overflow: hidden;
+      transition: var(--transition);
+    }
+    .order-card:hover {
+      box-shadow: var(--shadow);
+    }
+    .order-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      background: var(--bg-light);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .order-card-header .order-id {
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+    .order-card-header .order-date {
+      color: var(--text-light);
+      font-size: 0.85rem;
+    }
+    .order-card-body {
+      padding: 20px 24px;
+    }
+    .order-items-list {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .order-item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+    .order-item-row:last-child {
+      border-bottom: none;
+    }
+    .order-item-row .item-name {
+      font-weight: 500;
+    }
+    .order-item-row .item-qty {
+      color: var(--text-light);
+      font-size: 0.85rem;
+    }
+    .order-summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      font-size: 0.9rem;
+    }
+    .order-summary-row.total {
+      font-weight: 700;
+      font-size: 1.05rem;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+      margin-top: 8px;
+    }
+    .order-summary-row.discount {
+      color: #059669;
+    }
+
+    /* Order Status Timeline */
+    .order-timeline {
+      margin-top: 16px;
+      padding: 16px;
+      background: var(--bg-light);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+    .order-timeline h4 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--text-light);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .timeline-item {
+      display: flex;
+      gap: 12px;
+      padding: 8px 0;
+      position: relative;
+    }
+    .timeline-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-top: 6px;
+      flex-shrink: 0;
+    }
+    .timeline-dot.status-pending { background: #f59e0b; }
+    .timeline-dot.status-confirmed { background: #3b82f6; }
+    .timeline-dot.status-shipped { background: #8b5cf6; }
+    .timeline-dot.status-delivered { background: #10b981; }
+    .timeline-dot.status-cancelled { background: #ef4444; }
+    .timeline-dot.info { background: var(--accent); }
+    .timeline-content {
+      flex: 1;
+    }
+    .timeline-content .timeline-label {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    .timeline-content .timeline-detail {
+      color: var(--text-light);
+      font-size: 0.85rem;
+      margin-top: 2px;
+    }
+    .order-address {
+      font-size: 0.85rem;
+      color: var(--text-light);
+      margin-top: 12px;
+      padding: 12px;
+      background: var(--bg-light);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+    .order-address strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    /* Status Badge styles (matching store theme) */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: 100px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .badge-pending { background: rgba(245,158,11,0.12); color: #d97706; border: 1px solid rgba(245,158,11,0.3); }
+    .badge-confirmed { background: rgba(59,130,246,0.12); color: #2563eb; border: 1px solid rgba(59,130,246,0.3); }
+    .badge-shipped { background: rgba(139,92,246,0.12); color: #7c3aed; border: 1px solid rgba(139,92,246,0.3); }
+    .badge-delivered { background: rgba(16,185,129,0.12); color: #059669; border: 1px solid rgba(16,185,129,0.3); }
+    .badge-cancelled { background: rgba(239,68,68,0.12); color: #dc2626; border: 1px solid rgba(239,68,68,0.3); }
+
+    .no-orders {
+      text-align: center;
+      padding: 80px 20px;
+    }
+    .no-orders svg {
+      color: var(--text-light);
+      margin-bottom: 16px;
+    }
+    .no-orders h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .no-orders p {
+      color: var(--text-light);
+      margin-bottom: 24px;
+    }
+
+    /* Auth required overlay */
+    .auth-required {
+      text-align: center;
+      padding: 80px 20px;
+    }
+    .auth-required svg {
+      color: var(--text-light);
+      margin-bottom: 16px;
+    }
+    .auth-required h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .auth-required p {
+      color: var(--text-light);
+      margin-bottom: 24px;
+    }
+
+    /* Payment info display */
+    .order-payment-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 12px;
+      background: var(--bg-light);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+    .order-payment-info .label {
+      color: var(--text-light);
+    }
+    .order-payment-info .value {
+      font-weight: 600;
+      text-align: right;
+    }
+  </style>
+</head>
+<body data-page-title="My Orders">
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="/" class="logo">
+        <span id="storeLogoText">MRSELLS</span>
+      </a>
+      <div class="nav-links" id="navLinks">
+        <a href="/">Home</a>
+        <a href="/#products">Shop</a>
+        <a href="/#categories">Categories</a>
+        <a href="/my-orders" class="active">Orders</a>
+        <a href="/#contact">Contact</a>
+      </div>
+      <div class="nav-actions">
+        <div id="authContainer"></div>
+        <button class="icon-btn" id="cartToggle" aria-label="Open cart">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          <span class="cart-badge" id="cartBadge">0</span>
+        </button>
+        <button class="icon-btn menu-toggle" id="menuToggle" aria-label="Toggle menu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Cart Sidebar -->
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <div class="cart-sidebar" id="cartSidebar">
+    <div class="cart-header">
+      <h2>Shopping Cart</h2>
+      <button id="closeCart">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="cart-items" id="cartItems">
+      <div class="cart-empty">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <p>Your cart is empty</p>
+      </div>
+    </div>
+    <div class="cart-footer">
+      <div class="cart-coupon" id="couponSection" style="display:none;">
+        <div class="coupon-row">
+          <input type="text" id="couponInput" placeholder="Enter coupon code" class="coupon-input">
+          <button class="btn btn-sm btn-primary" id="applyCouponBtn">Apply</button>
+        </div>
+        <div id="couponMessage" class="coupon-message"></div>
+      </div>
+      <div class="cart-total">
+        <div class="cart-total-row" id="discountRow" style="display:none;">
+          <span>Discount</span>
+          <span id="discountAmount" style="color:#059669;">-$0.00</span>
+        </div>
+        <div class="cart-total-row">
+          <span>Total</span>
+          <span id="cartTotal">$0.00</span>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block" id="checkoutBtn" disabled>Checkout</button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <section class="orders-page">
+    <div class="container">
+      <div class="orders-header">
+        <div>
+          <span class="section-tag">My Account</span>
+          <h1>My Orders</h1>
+        </div>
+        <a href="/" class="back-link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          Back to Store
+        </a>
+      </div>
+
+      <!-- Track a Package -->
+      <div class="track-package-section" style="margin-bottom:32px;padding:20px 24px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-light);">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          <h3 style="font-size:1rem;font-weight:600;margin:0;">Track a Package</h3>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <input type="text" id="trackingInput" placeholder="Enter your tracking number" style="flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:0.9rem;">
+          <button class="btn btn-primary" onclick="lookupTracking()">Track</button>
+        </div>
+        <div id="activeShipmentBanner" style="margin-top:12px;"></div>
+        <div id="trackingResult" style="margin-top:12px;"></div>
+      </div>
+
+      <!-- Auth Required State -->
+      <div class="auth-required" id="authRequired" style="display:none;">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <h2>Sign in to View Orders</h2>
+        <p>Please sign in to your account to view your order history and track shipments.</p>
+        <button class="btn btn-primary" onclick="openAuthModal()">Sign In / Register</button>
+      </div>
+
+      <!-- No Orders State -->
+      <div class="no-orders" id="noOrders" style="display:none;">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <h2>No Orders Yet</h2>
+        <p>You haven't placed any orders yet. Start shopping and your orders will appear here.</p>
+        <a href="/#products" class="btn btn-primary">Start Shopping</a>
+      </div>
+
+      <!-- Loading State -->
+      <div id="ordersLoading" style="text-align:center;padding:60px 20px;">
+        <div class="skeleton" style="height:120px;margin-bottom:16px;border-radius:12px;"></div>
+        <div class="skeleton" style="height:120px;border-radius:12px;"></div>
+      </div>
+
+      <!-- Orders List -->
+      <div class="orders-list" id="ordersList"></div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="/" class="logo">
+            <span id="storeLogoTextFooter">MRSELLS</span>
+          </a>
+          <p id="footerDescription">Premium products curated for modern living. Quality you can trust.</p>
+          <div class="social-links">
+            <a href="#" aria-label="Facebook">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+            </a>
+            <a href="#" aria-label="Instagram">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+            </a>
+            <a href="#" aria-label="Twitter">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/></svg>
+            </a>
+            <a href="#" aria-label="LinkedIn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+            </a>
+          </div>
+        </div>
+        <div class="footer-links">
+          <h4>Quick Links</h4>
+          <a href="/#products">Shop All</a>
+          <a href="/#categories">Categories</a>
+          <a href="/my-orders">My Orders</a>
+        </div>
+        <div class="footer-links">
+          <h4>Customer Service</h4>
+          <a href="#">Shipping Info</a>
+          <a href="#">Returns</a>
+          <a href="#">FAQ</a>
+        </div>
+        <div class="footer-links">
+          <h4>Company</h4>
+          <a href="#">About Us</a>
+          <a href="#">Careers</a>
+          <a href="#">Privacy Policy</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; <span id="footerYear">2026</span> <span id="storeLogoTextFooter2">Store</span>. All rights reserved.</p>
+        <div class="payment-methods">
+          <svg width="38" height="24" viewBox="0 0 38 24" fill="none"><rect width="38" height="24" rx="4" fill="#1a1f71"/><path d="M15.5 8l-4 8h-3l-1.5-4.5c-.2-.5-.4-1-.5-1.3v-2.2h4v3l2.5-3h3.5v3l2-3h2.5l-3 4 3 4h-2.5l-2-3z" fill="#fff"/></svg>
+          <svg width="38" height="24" viewBox="0 0 38 24" fill="none"><rect width="38" height="24" rx="4" fill="#eb001b"/><path d="M16 8h6v8h-6z" fill="#f79e1b"/><path d="M17 12a5 5 0 0 1 1.9-3.9 5 5 0 0 0 0 7.8A5 5 0 0 1 17 12z" fill="#ff5f00"/></svg>
+          <svg width="38" height="24" viewBox="0 0 38 24" fill="none"><rect width="38" height="24" rx="4" fill="#1434cb"/><path d="M20 16V8h3.5c1.5 0 2.5.8 2.5 2.2 0 .8-.4 1.3-.8 1.6.5.2 1 .7 1 1.6 0 1.5-1.1 2.6-2.7 2.6H20zm2.3-4.8h.8c.7 0 1.1-.3 1.1-.9s-.4-.9-1.1-.9h-.8v1.8zm0 3.2h1c.8 0 1.2-.4 1.2-1 0-.6-.4-1-1.2-1h-1v2z" fill="#fff"/></svg>
+          <svg width="38" height="24" viewBox="0 0 38 24" fill="none"><rect width="38" height="24" rx="4" fill="#003087"/><path d="M13 16V8h3.5c1.5 0 2.5.8 2.5 2.2 0 .8-.4 1.3-.8 1.6.5.2 1 .7 1 1.6 0 1.5-1.1 2.6-2.7 2.6H13zm2.3-4.8h.8c.7 0 1.1-.3 1.1-.9s-.4-.9-1.1-.9h-.8v1.8zm0 3.2h1c.8 0 1.2-.4 1.2-1 0-.6-.4-1-1.2-1h-1v2z" fill="#fff"/></svg>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Auth Modal -->
+  <div class="modal-overlay" id="authModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>My Account</h2>
+        <button class="modal-close" onclick="closeAuthModal()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login" onclick="switchAuthTab('login')">Sign In</button>
+        <button class="auth-tab" data-tab="register" onclick="switchAuthTab('register')">Register</button>
+      </div>
+      <form id="authLoginForm" class="auth-form active">
+        <div class="form-group">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" required>
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" required>
+        </div>
+        <div id="loginError" class="form-error"></div>
+        <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+      </form>
+      <form id="authRegisterForm" class="auth-form">
+        <div class="form-group">
+          <label for="registerName">Full Name</label>
+          <input type="text" id="registerName" required>
+        </div>
+        <div class="form-group">
+          <label for="registerEmail">Email</label>
+          <input type="email" id="registerEmail" required>
+        </div>
+        <div class="form-group">
+          <label for="registerPassword">Password (min 6 characters)</label>
+          <input type="password" id="registerPassword" required minlength="6">
+        </div>
+        <div id="registerError" class="form-error"></div>
+        <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Success Toast -->
+  <div class="toast" id="toast">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    <div>
+      <strong id="toastTitle">Success!</strong>
+      <p id="toastMessage">Item added to cart.</p>
+    </div>
+  </div>
+
+  <!-- AI Chat Widget - Persistent Bar + Full-Page Mode -->
+  <div class="ai-chat-widget" id="aiChatWidget">
+    <div class="ai-chat-bar">
+      <input type="text" class="ai-chat-bar-input" id="aiChatBarInput" placeholder="Ask me anything..." autocomplete="off">
+      <button class="ai-chat-bar-send" id="aiChatBarSend" aria-label="Send message">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Full Page AI Chat (Shop.app style) -->
+  <div class="ai-chat-page" id="aiChatPage">
+    <div class="ai-chat-page-header">
+      <div class="ai-chat-page-header-info">
+        <div class="ai-chat-page-avatar" id="aiChatPageAvatar">M</div>
+        <div>
+          <h2 id="aiChatPageName">AI Assistant</h2>
+          <p>AI Shopping Assistant</p>
+        </div>
+      </div>
+      <button class="ai-chat-page-close" id="aiChatPageClose" aria-label="Close chat">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="ai-chat-page-context" style="display:none;">
+      <span class="ai-chat-page-context-dot"></span>
+      <span id="aiChatPageContextText">You're on: My Orders</span>
+    </div>
+    <div class="ai-chat-page-messages" id="aiChatPageMessages">
+      <div class="ai-chat-page-message bot">
+        <div class="ai-chat-page-message-avatar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-4 0V4a2 2 0 0 1 2-2z"/><path d="M12 14a2 2 0 0 1-2-2V8a2 2 0 0 1 4 0v4a2 2 0 0 1-2 2z"/><circle cx="12" cy="20" r="2"/></svg>
+        </div>
+        <div class="ai-chat-page-message-content" id="aiChatPageWelcome">
+Loading...
+        </div>
+      </div>
+    </div>
+    <div class="ai-chat-page-input-bar">
+      <div class="ai-chat-page-input-bar-inner">
+        <input type="text" id="aiChatPageInput" placeholder="Ask me anything..." autocomplete="off">
+        <button id="aiChatPageSend" aria-label="Send">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script src="my-orders.js"></script>
+</body>
+</html>

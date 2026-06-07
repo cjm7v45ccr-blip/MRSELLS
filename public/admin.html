@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="adminPageTitle">Store Admin</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="/" class="logo">
+          <span class="logo-icon"><i class="fas fa-store"></i></span>
+          <span id="sidebarStoreName">Store</span>
+        </a>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-divider">MAIN</div>
+        <a href="#" class="nav-item active" data-section="dashboard"><i class="fas fa-chart-bar"></i><span>Dashboard</span></a>
+        <a href="#" class="nav-item" data-section="orders"><i class="fas fa-shopping-cart"></i><span>Orders</span></a>
+        <a href="#" class="nav-item" data-section="products"><i class="fas fa-box"></i><span>Products</span></a>
+        <a href="#" class="nav-item" data-section="customers"><i class="fas fa-users"></i><span>Customers</span></a>
+
+        <div class="nav-divider">STORE</div>
+        <a href="#" class="nav-item" data-section="store-editor"><i class="fas fa-paint-brush"></i><span>Store Settings</span></a>
+        <a href="#" class="nav-item" data-section="categories"><i class="fas fa-tags"></i><span>Categories</span></a>
+        <a href="#" class="nav-item" data-section="coupons"><i class="fas fa-percent"></i><span>Coupons</span></a>
+        <a href="#" class="nav-item" data-section="payments"><i class="fas fa-credit-card"></i><span>Payments</span></a>
+        <a href="#" class="nav-item" data-section="policies"><i class="fas fa-file-alt"></i><span>Policies</span></a>
+
+        <div class="nav-divider">EXTRAS</div>
+        <a href="#" class="nav-item" data-section="gift-cards"><i class="fas fa-gift"></i><span>Gift Cards</span></a>
+        <a href="#" class="nav-item" data-section="newsletter"><i class="fas fa-envelope"></i><span>Subscribers</span></a>
+        <a href="#" class="nav-item" data-section="analytics"><i class="fas fa-chart-line"></i><span>Analytics</span></a>
+        <a href="#" class="nav-item" data-section="staff"><i class="fas fa-user-tie"></i><span>Staff</span></a>
+        <a href="#" class="nav-item" data-section="activity"><i class="fas fa-history"></i><span>Activity Log</span></a>
+        <a href="/" class="nav-item" target="_blank"><i class="fas fa-external-link-alt"></i><span>View Store</span></a>
+
+        <div class="nav-divider">ACCOUNT</div>
+        <a href="#" class="nav-item" data-section="profile"><i class="fas fa-cog"></i><span>Admin Profile</span></a>
+        <a href="#" class="nav-item" id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+      </nav>
+    </aside>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="main-content">
+      <header class="admin-header">
+        <button class="sidebar-toggle" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+        <h1 id="pageTitle">Dashboard</h1>
+      </header>
+
+      <div class="content-area" id="contentArea">
+        <!-- Content loaded dynamically -->
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="adminToast">
+    <i class="fas fa-check-circle"></i>
+    <div><strong id="toastTitle">Success!</strong><p id="toastMessage">Action completed.</p></div>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>

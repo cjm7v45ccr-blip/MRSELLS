@@ -1,0 +1,53 @@
+/* ========== Responsive Breakpoints ========== */
+@media (max-width: 1024px) {
+  .hero-grid { grid-template-columns: 1fr; gap: 40px; }
+  .hero-visual { height: 380px; }
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+  .nav-search { min-width: 160px; }
+}
+@media (max-width: 768px) {
+  :root { --navbar-height: 60px; }
+  .nav-search { display: none; }
+  .nav-links {
+    position: fixed; top: var(--navbar-height); left: 0; right: 0;
+    background: var(--bg); flex-direction: column; padding: 24px; gap: 16px;
+    border-bottom: 1px solid var(--border);
+    transform: translateY(-100%); opacity: 0; visibility: hidden;
+    transition: var(--transition); z-index: 99;
+  }
+  .nav-links.show { transform: translateY(0); opacity: 1; visibility: visible; }
+  .nav-links a.active::after { display: none; }
+  .menu-toggle { display: inline-flex; }
+  section { padding: 60px 0; }
+  .hero { padding: 40px 0 60px; }
+  .hero-stats { grid-template-columns: repeat(2, 1fr); }
+  .hero-visual { height: 320px; }
+  .cart-sidebar { width: 100%; }
+  .form-row { grid-template-columns: 1fr; }
+  .modal { padding: 24px; max-width: calc(100vw - 32px); }
+  .footer-grid { grid-template-columns: 1fr; gap: 32px; }
+  .footer-bottom { flex-direction: column; text-align: center; }
+  .products-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+  .newsletter-form { flex-direction: column; }
+  .newsletter { padding: 28px 20px; }
+
+  /* AI responsive */
+  .ai-fullscreen { height: calc(100vh - var(--navbar-height)); margin-top: var(--navbar-height); }
+  .ai-canvas { padding: 16px 16px 80px; }
+  .ai-active-search { font-size: 1.3rem; }
+  .ai-filter-pill { padding: 6px 14px; font-size: 0.78rem; }
+  .ai-results { max-width: 100%; }
+  .ai-results .ai-products-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .ai-welcome { padding: 30px 16px; }
+  .ai-bottom-bar { padding: 12px 16px 16px; }
+  .ai-bottom-bar .ai-input-row .ai-input { font-size: 0.9rem; }
+}
+@media (max-width: 480px) {
+  .hero-title { font-size: 2rem; }
+  .hero-visual { height: 280px; }
+  .products-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .product-info { padding: 12px; }
+  .ai-canvas { padding: 12px 12px 74px; }
+  .ai-results .ai-products-grid { gap: 8px; }
+  .ai-active-search { font-size: 1.1rem; }
+}

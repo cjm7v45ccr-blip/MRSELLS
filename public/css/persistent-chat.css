@@ -1,0 +1,86 @@
+/* ========== Persistent Bottom Chat Bar ========== */
+/* Floating pill-style input bar centered above bottom of window */
+.persistent-chat-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  display: none; /* hidden by default, shown by JS */
+  padding: 0 16px 20px;
+  pointer-events: none;
+  background: linear-gradient(transparent, rgba(255,255,255,0.9) 30%);
+}
+.persistent-chat-bar.show {
+  display: block;
+}
+.persistent-chat-inner {
+  max-width: 600px;
+  margin: 0 auto;
+  pointer-events: auto;
+}
+.persistent-chat-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 4px 4px 20px;
+  background: #f1f1f1;
+  border: 1px solid #e2e5e8;
+  border-radius: 100px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: box-shadow 0.2s ease;
+}
+.persistent-chat-row:focus-within {
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+  border-color: #d0d3d6;
+}
+.persistent-chat-input {
+  flex: 1;
+  height: 44px;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.92rem;
+  color: #1a1a1a;
+}
+.persistent-chat-input::placeholder {
+  color: #9a9ea6;
+  font-size: 0.85rem;
+}
+.persistent-chat-send {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  flex-shrink: 0;
+}
+.persistent-chat-send:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35);
+}
+.persistent-chat-send i {
+  font-size: 0.95rem;
+}
+
+/* Show persistent bar only when NOT on AI fullscreen page */
+.ai-fullscreen-overlay.active ~ .persistent-chat-bar,
+.ai-fullscreen-overlay.active + .persistent-chat-bar {
+  display: none !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .persistent-chat-bar {
+    padding: 8px 12px 12px;
+  }
+  .persistent-chat-input {
+    font-size: 0.88rem;
+  }
+}
