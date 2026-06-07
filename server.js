@@ -714,9 +714,9 @@ const upload = multer({
 // ============================
 const app = express();
 
-// Security
+// Security — allow external images and scripts
 app.use(helmet({
-  contentSecurityPolicy: NODE_ENV === 'production' ? undefined : false,
+  contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false
 }));
 app.use(cors());
@@ -3031,7 +3031,7 @@ app.post('/api/ai/chat', async (req, res) => {
 
     const aiName = settings.ai_name || 'Nova';
     const storeName = settings.store_name || 'CACA STORE';
-    const model = process.env.GEMINI_MODEL || 'gemini-2.0-flash-lite';
+    const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';
 
     // Build chat history transcript from frontend-provided history (max last 5-6 messages)
     const historyMessages = Array.isArray(history) ? history : [];
