@@ -705,6 +705,18 @@ if (!ADMIN_PASSWORD_HASH || !bcrypt.compareSync(ADMIN_PASSWORD_RAW, ADMIN_PASSWO
   console.log('  🔒 Admin password hash updated and persisted.');
 }
 
+// Maintenance endpoint to reset admin password hash (safe to expose since it just re-hashes from env var)
+app.post('/api/admin/reset-hash', (req, res) => {
+  try {
+    ADMIN_PASSWORD_HASH = bcrypt.hashSync(ADMIN_PASSWORD_RAW, 12);
+    setPersistedAdminHash(ADMIN_PASSWORD_HASH);
+    logActivity('admin_password_reset', 'Admin password hash reset via reset-hash endpoint', req.ip);
+    res.json({ message: 'Admin password hash reset. New hash saved from env var.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 function getSettings() {
   let settings = { ...DEFAULT_SETTINGS };
   try {
