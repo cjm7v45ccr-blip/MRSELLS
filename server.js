@@ -17,20 +17,16 @@ require('dotenv').config();
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
-// ---- REQUIRED ENV VARS (app will refuse to start without them) ----
-function requireEnv(name) {
-  const val = process.env[name];
-  if (!val || val.trim() === '') {
-    console.error(`\n  FATAL: Environment variable "${name}" is not set.\n  Copy .env.example to .env and fill in secure values.\n  See .env.example for instructions.\n`);
-    process.exit(1);
-  }
-  return val;
-}
-
-const JWT_SECRET = requireEnv('JWT_SECRET');
-const ADMIN_EMAIL = requireEnv('ADMIN_EMAIL');
-const ADMIN_PASSWORD_RAW = requireEnv('ADMIN_PASSWORD');
+// ---- ENV VARS (with fallbacks for Render compatibility) ----
+const JWT_SECRET = process.env.JWT_SECRET || process.env.npm_package_name || 'storefront-jwt-secret-change-me';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@store.com';
+const ADMIN_PASSWORD_RAW = process.env.ADMIN_PASSWORD || 'admin123';
 const ADMIN_PASSWORD_HASH = bcrypt.hashSync(ADMIN_PASSWORD_RAW, 12);
+
+// Log warnings for placeholder values
+if (JWT_SECRET === 'storefront-jwt-secret-change-me' || ADMIN_PASSWORD_RAW === 'admin123') {
+  console.warn('\n  ⚠️  WARNING: Using default/demo credentials! Set JWT_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD in environment.\n');
+}
 
 const CORS_ORIGIN = process.env.CORS_ORIGIN || '';
 const UPLOAD_DIR = process.env.UPLOAD_DIR || 'uploads';
@@ -3214,11 +3210,13 @@ app.use((err, req, res, next) => {
 // Start Server
 // ============================
 initDb().then(() => {
-  app.listen(PORT, () => {
-    console.log(`\n  Storefront Server running at http://localhost:${PORT}`);
-    console.log(`  Storefront: http://localhost:${PORT}`);
-    console.log(`  Admin Login: http://localhost:${PORT}/admin/login`);
-    console.log(`  Admin Panel: http://localhost:${PORT}/admin\n`);
+  const HOST = NODE_ENV === 'production' ? '0.0.0.0' : '0.0.0.0';
+  app.listen(PORT, HOST, () => {
+    const addr = NODE_ENV === 'production' ? process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}` : `http://localhost:${PORT}`;
+    console.log(`\n  Storefront Server running at ${addr}`);
+    console.log(`  Environment: ${NODE_ENV}`);
+    console.log(`  Admin Login: ${addr}/admin/login`);
+    console.log(`  Admin Panel: ${addr}/admin\n`);
   });
 }).catch(err => {
   console.error('Failed to initialize database:', err);

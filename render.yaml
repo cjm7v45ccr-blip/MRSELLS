@@ -1,0 +1,32 @@
+# Render deployment configuration
+# https://render.com/docs/web-services
+
+services:
+  - type: web
+    name: store-front
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/settings
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      # IMPORTANT: Set these in Render Dashboard under Environment Variables:
+      - key: ADMIN_EMAIL
+        sync: false    # Set this in Render dashboard
+      - key: ADMIN_PASSWORD
+        sync: false    # Set this in Render dashboard
+      - key: JWT_SECRET
+        sync: false    # Set this in Render dashboard
+      - key: GEMINI_API_KEY
+        sync: false    # Optional: Set if using AI assistant
+      - key: CASH_APP_ENABLED
+        sync: false    # Optional
+      - key: CASH_APP_CASHTAG
+        sync: false    # Optional
+    disk:
+      name: data
+      mountPath: /opt/render/project/src/store-front
+      sizeGB: 1
