@@ -710,7 +710,13 @@ function getSettings() {
   try {
     if (fs.existsSync(SETTINGS_PATH)) {
       const raw = fs.readFileSync(SETTINGS_PATH, 'utf-8');
-      settings = { ...settings, ...JSON.parse(raw) };
+      const parsed = JSON.parse(raw);
+      // Merge all settings EXCEPT private internal fields
+      for (const [key, value] of Object.entries(parsed)) {
+        if (!key.startsWith('_')) {
+          settings[key] = value;
+        }
+      }
     }
   } catch (e) {
     console.error('Failed to read settings.json:', e.message);
