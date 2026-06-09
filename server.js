@@ -3,6 +3,7 @@ const path = require('path');
 const cors = require('cors');
 const fs = require('fs');
 const https = require('https');
+const crypto = require('crypto');
 const { execSync } = require('child_process');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -19,31 +20,52 @@ require('dotenv').config();
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
-// ---- ENV VARS (with fallbacks for Render compatibility) ----
-const JWT_SECRET = process.env.JWT_SECRET;
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
-const ADMIN_PASSWORD_RAW = process.env.ADMIN_PASSWORD;
-
-// ---- FAIL-FAST: Require secure env vars in production ----
-if (!JWT_SECRET || JWT_SECRET.length < 32) {
-  console.error('\n  ❌ FATAL: JWT_SECRET is missing or too short. Set a strong JWT_SECRET (32+ chars) in your environment.\n');
-  process.exit(1);
-}
-if (!ADMIN_EMAIL) {
-  console.error('\n  ❌ FATAL: ADMIN_EMAIL is not set. Set it in your environment.\n');
-  process.exit(1);
-}
-if (!ADMIN_PASSWORD_RAW || ADMIN_PASSWORD_RAW.length < 8) {
-  console.error('\n  ❌ FATAL: ADMIN_PASSWORD is missing or too short. Set a strong password (8+ chars) in your environment.\n');
-  process.exit(1);
-}
-
 const CORS_ORIGIN = process.env.CORS_ORIGIN || (NODE_ENV === 'production' ? 'https://mrsells.onrender.com' : '');
 const UPLOAD_DIR = process.env.UPLOAD_DIR || 'uploads';
 const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE) || 5 * 1024 * 1024;
 const DB_PATH = path.join(__dirname, process.env.DB_PATH || 'store.db');
 const UPLOAD_PATH = path.join(__dirname, UPLOAD_DIR);
 const SETTINGS_PATH = path.join(__dirname, 'settings.json');
+const ADMIN_LOGIN_PATH = path.join(__dirname, 'admin-login.json');
+
+// ============================
+// Simple Admin Login (username + password stored in admin-login.json)
+// ============================
+// No env vars, no bcrypt, no hashing. The first time the server starts it
+// creates admin-login.json with default credentials (admin / admin123).
+// The user can change them through the admin panel after first login.
+const DEFAULT_ADMIN_LOGIN = {
+  username: 'admin',
+  password: 'admin123',
+  jwt_secret: crypto.randomBytes(32).toString('hex')
+};
+
+function getAdminLogin() {
+  try {
+    if (fs.existsSync(ADMIN_LOGIN_PATH)) {
+      const raw = fs.readFileSync(ADMIN_LOGIN_PATH, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.username && parsed.password && parsed.jwt_secret) {
+        return parsed;
+      }
+    }
+  } catch (e) {}
+  // First run: create the file with defaults
+  fs.writeFileSync(ADMIN_LOGIN_PATH, JSON.stringify(DEFAULT_ADMIN_LOGIN, null, 2));
+  console.log('  👤 Created admin-login.json with default credentials (admin / admin123)');
+  return { ...DEFAULT_ADMIN_LOGIN };
+}
+
+function saveAdminLogin(data) {
+  fs.writeFileSync(ADMIN_LOGIN_PATH, JSON.stringify(data, null, 2));
+}
+
+// Load credentials and JWT signing key at startup
+const ADMIN_LOGIN = getAdminLogin();
+const ADMIN_USERNAME = ADMIN_LOGIN.username;
+const ADMIN_PASSWORD = ADMIN_LOGIN.password;
+const JWT_SECRET = ADMIN_LOGIN.jwt_secret;
+console.log(`  👤 Admin login ready (username: "${ADMIN_USERNAME}")`);
 
 const DEFAULT_SETTINGS = {
   store_name: 'CACA STORE',
@@ -72,9 +94,9 @@ const DEFAULT_SETTINGS = {
   cash_app_payment_link: process.env.CASH_APP_PAYMENT_LINK || '',
   cash_app_display_name: process.env.CASH_APP_DISPLAY_NAME || '',
   cash_app_note_prefix: process.env.CASH_APP_NOTE_PREFIX || 'Store order',
-  // Admin profile
+  // Admin profile (no email anymore — uses admin-login.json)
   admin_name: 'Admin',
-  admin_email: ADMIN_EMAIL,
+  admin_email: '',
   // Store policies / product page content
   policy_sales_final: 'All sales are final. If you have a real issue with your order, please contact our customer support team and we will do our best to assist you.',
   policy_returns: 'All sales are final. We do not accept returns or exchanges. If you receive a damaged or incorrect item, please contact our customer support team for assistance.',
@@ -677,27 +699,8 @@ function resolveCustomerTracking(customer) {
   return getLatestActiveOrderForCustomer(customer.id, customer.email);
 }
 
-// ---- Admin password hash: use persisted hash from settings.json if available ----
-function getPersistedAdminHash() {
-  try {
-    if (fs.existsSync(SETTINGS_PATH)) {
-      const raw = fs.readFileSync(SETTINGS_PATH, 'utf-8');
-      const parsed = JSON.parse(raw);
-      if (parsed._admin_password_hash && typeof parsed._admin_password_hash === 'string' && parsed._admin_password_hash.startsWith('$2')) {
-        return parsed._admin_password_hash;
-      }
-    }
-  } catch (e) {}
-  return null;
-}
-
-function setPersistedAdminHash(hash) {
-  const settings = getSettings();
-  settings._admin_password_hash = hash;
-  fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2));
-}
-
-// Defer app setup until after express is initialized - see below
+// (Admin login helpers getAdminLogin / saveAdminLogin / initializeAdminPasswordHash
+//  are defined at the top of this file, before the routes.)
 
 function getSettings() {
   let settings = { ...DEFAULT_SETTINGS };
@@ -725,18 +728,6 @@ function logActivity(action, details = '', ip = '') {
     // Non-critical
   }
 }
-
-// Maintenance endpoint to reset admin password hash (safe to expose since it just re-hashes from env var)
-app.post('/api/admin/reset-hash', (req, res) => {
-  try {
-    ADMIN_PASSWORD_HASH = bcrypt.hashSync(ADMIN_PASSWORD_RAW, 12);
-    setPersistedAdminHash(ADMIN_PASSWORD_HASH);
-    console.log('  🔒 Admin password hash reset via reset-hash endpoint');
-    res.json({ message: 'Admin password hash reset. New hash saved from env var.' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
 
 // ============================
 // Multer Setup (File Uploads)
@@ -859,35 +850,59 @@ function handleValidationErrors(req, res) {
 }
 
 // ============================
-// Auth Routes
+// Auth Routes (simple username + password)
 // ============================
 app.post('/api/admin/login', authLimiter, [
-  body('email').isEmail().normalizeEmail(),
-  body('password').isLength({ min: 1 })
+  body('username').trim().isLength({ min: 1 }).withMessage('Username is required'),
+  body('password').isLength({ min: 1 }).withMessage('Password is required')
 ], (req, res) => {
   const vErr = handleValidationErrors(req, res);
   if (vErr) return;
 
-  const { email, password } = req.body;
-  
-  // Compare email case-insensitively to be more forgiving
-  if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
-    logActivity('login_failed', `Failed login attempt for ${email}`, req.ip);
-    return res.status(401).json({ error: 'Invalid credentials' });
+  const { username, password } = req.body;
+
+  if (username !== ADMIN_USERNAME || password !== ADMIN_PASSWORD) {
+    logActivity('login_failed', `Failed admin login attempt for "${username}"`, req.ip);
+    return res.status(401).json({ error: 'Invalid username or password' });
   }
 
-  if (!bcrypt.compareSync(password, ADMIN_PASSWORD_HASH)) {
-    logActivity('login_failed', `Failed login attempt for ${email}`, req.ip);
-    return res.status(401).json({ error: 'Invalid credentials' });
-  }
-  
-  const token = jwt.sign({ email, role: 'admin' }, JWT_SECRET, { expiresIn: '24h' });
-  logActivity('login', 'Admin logged in', req.ip);
-  res.json({ token, email });
+  const token = jwt.sign({ username: ADMIN_USERNAME, role: 'admin' }, JWT_SECRET, { expiresIn: '24h' });
+  logActivity('login', `Admin "${ADMIN_USERNAME}" logged in`, req.ip);
+  res.json({ token, username: ADMIN_USERNAME });
 });
 
 app.get('/api/admin/verify', authenticateToken, (req, res) => {
-  res.json({ valid: true, email: req.admin.email });
+  res.json({ valid: true, username: req.admin.username });
+});
+
+// Admin can change their own username/password from inside the panel
+app.post('/api/admin/login-update', authenticateToken, [
+  body('current_password').isLength({ min: 1 }).withMessage('Current password is required'),
+  body('new_username').optional().trim().isLength({ min: 1 }),
+  body('new_password').optional().isLength({ min: 6 }).withMessage('New password must be at least 6 characters')
+], (req, res) => {
+  const vErr = handleValidationErrors(req, res);
+  if (vErr) return;
+
+  const { current_password, new_username, new_password } = req.body;
+
+  if (current_password !== ADMIN_PASSWORD) {
+    logActivity('login_update_failed', `Failed admin credentials change attempt`, req.ip);
+    return res.status(401).json({ error: 'Current password is incorrect' });
+  }
+
+  const updated = {
+    username: (new_username && new_username.length) ? new_username : ADMIN_USERNAME,
+    password: (new_password && new_password.length) ? new_password : ADMIN_PASSWORD,
+    jwt_secret: ADMIN_LOGIN.jwt_secret
+  };
+
+  saveAdminLogin(updated);
+  logActivity('login_updated', 'Admin credentials updated', req.ip);
+
+  // Issue a new token signed with the (unchanged) secret, so the session remains valid
+  const token = jwt.sign({ username: updated.username, role: 'admin' }, JWT_SECRET, { expiresIn: '24h' });
+  res.json({ token, username: updated.username, message: 'Login updated successfully' });
 });
 
 // ============================
@@ -1656,13 +1671,13 @@ app.put('/api/admin/settings', authenticateToken, (req, res) => {
   }
 });
 
-// Admin Profile
+// Admin Profile (just the display name — credentials live in admin-login.json)
 app.get('/api/admin/profile', authenticateToken, (req, res) => {
   try {
     const settings = getSettings();
     res.json({
-      name: settings.admin_name || 'Admin',
-      email: settings.admin_email || ADMIN_EMAIL
+      name: settings.admin_name || ADMIN_USERNAME,
+      username: req.admin.username
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1670,37 +1685,22 @@ app.get('/api/admin/profile', authenticateToken, (req, res) => {
 });
 
 app.put('/api/admin/profile', authenticateToken, [
-  body('name').optional().trim().isLength({ min: 1 }),
-  body('email').optional().isEmail().normalizeEmail(),
-  body('current_password').isLength({ min: 1 }).withMessage('Current password is required'),
-  body('new_password').optional().isLength({ min: 6 })
+  body('name').optional().trim().isLength({ min: 1 })
 ], (req, res) => {
   const vErr = handleValidationErrors(req, res);
   if (vErr) return;
 
   try {
-    const { name, email, current_password, new_password } = req.body;
-    const settings = getSettings();
-
-    // Verify current password
-    const storedHash = ADMIN_PASSWORD_HASH;
-    if (!bcrypt.compareSync(current_password, storedHash)) {
-      return res.status(401).json({ error: 'Current password is incorrect' });
-    }
-
+    const { name } = req.body;
     const current = getSettings();
     const merged = {};
     for (const [key, value] of Object.entries(current)) {
       merged[key] = String(value);
     }
-
     if (name) merged.admin_name = String(name);
-    if (email) merged.admin_email = String(email);
-
     fs.writeFileSync(SETTINGS_PATH, JSON.stringify(merged, null, 2));
-
     logActivity('admin_profile_updated', 'Admin profile updated', req.ip);
-    res.json({ name: merged.admin_name, email: merged.admin_email, message: 'Profile updated successfully' });
+    res.json({ name: merged.admin_name, username: req.admin.username, message: 'Profile updated successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -1985,14 +1985,13 @@ app.put('/api/admin/orders/:id/payment', authenticateToken, [
 });
 
 // Export orders to CSV (uses server-side session token for secure download)
-const exportTokens = new Map(); // Map<token, { adminEmail, expiresAt }>
+const exportTokens = new Map(); // Map<token, { adminUsername, expiresAt }>
 
 // Generate short-lived export token (valid 60 seconds)
 app.post('/api/admin/orders/export/token', authenticateToken, (req, res) => {
   try {
-    const crypto = require('crypto');
     const token = crypto.randomBytes(32).toString('hex');
-    exportTokens.set(token, { email: req.admin.email, expiresAt: Date.now() + 60 * 1000 });
+    exportTokens.set(token, { username: req.admin.username, expiresAt: Date.now() + 60 * 1000 });
     // Clean up expired tokens
     for (const [t, data] of exportTokens) {
       if (Date.now() > data.expiresAt) exportTokens.delete(t);
@@ -2800,10 +2799,10 @@ app.put('/api/admin/staff/:id', authenticateToken, (req, res) => {
 app.delete('/api/admin/staff/:id', authenticateToken, (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    // Prevent deleting yourself
+    // Prevent deleting yourself (the logged-in admin)
     const staff = queryOne('SELECT * FROM staff_accounts WHERE id = ?', [id]);
-    if (staff && staff.email === ADMIN_EMAIL) {
-      return res.status(400).json({ error: 'Cannot delete primary admin account' });
+    if (staff && staff.email && staff.email.toLowerCase() === req.admin.username.toLowerCase()) {
+      return res.status(400).json({ error: 'Cannot delete the primary admin account' });
     }
 
     execute('DELETE FROM staff_accounts WHERE id = ?', [id]);
@@ -2814,7 +2813,7 @@ app.delete('/api/admin/staff/:id', authenticateToken, (req, res) => {
   }
 });
 
-// Staff login
+// Staff login (sub-admin accounts managed by the primary admin)
 app.post('/api/admin/staff/login', authLimiter, [
   body('email').isEmail().normalizeEmail(),
   body('password').isLength({ min: 1 })
