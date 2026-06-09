@@ -864,11 +864,12 @@ app.post('/api/admin/login', authLimiter, [
 
   const { email, password } = req.body;
   
-  if (email !== ADMIN_EMAIL) {
+  // Compare email case-insensitively to be more forgiving
+  if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
     logActivity('login_failed', `Failed login attempt for ${email}`, req.ip);
     return res.status(401).json({ error: 'Invalid credentials' });
   }
-  
+
   if (!bcrypt.compareSync(password, ADMIN_PASSWORD_HASH)) {
     logActivity('login_failed', `Failed login attempt for ${email}`, req.ip);
     return res.status(401).json({ error: 'Invalid credentials' });
