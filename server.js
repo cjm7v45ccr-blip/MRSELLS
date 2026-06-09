@@ -45,34 +45,6 @@ const DB_PATH = path.join(__dirname, process.env.DB_PATH || 'store.db');
 const UPLOAD_PATH = path.join(__dirname, UPLOAD_DIR);
 const SETTINGS_PATH = path.join(__dirname, 'settings.json');
 
-// ---- Admin password hash: use persisted hash from settings.json if available ----
-function getPersistedAdminHash() {
-  try {
-    if (fs.existsSync(SETTINGS_PATH)) {
-      const raw = fs.readFileSync(SETTINGS_PATH, 'utf-8');
-      const parsed = JSON.parse(raw);
-      if (parsed._admin_password_hash && typeof parsed._admin_password_hash === 'string' && parsed._admin_password_hash.startsWith('$2')) {
-        return parsed._admin_password_hash;
-      }
-    }
-  } catch (e) {}
-  return null;
-}
-
-function setPersistedAdminHash(hash) {
-  const settings = getSettings();
-  settings._admin_password_hash = hash;
-  fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2));
-}
-
-let ADMIN_PASSWORD_HASH = getPersistedAdminHash();
-if (!ADMIN_PASSWORD_HASH || !bcrypt.compareSync(ADMIN_PASSWORD_RAW, ADMIN_PASSWORD_HASH)) {
-  // Hash changed or first run — persist the new hash
-  ADMIN_PASSWORD_HASH = bcrypt.hashSync(ADMIN_PASSWORD_RAW, 12);
-  setPersistedAdminHash(ADMIN_PASSWORD_HASH);
-  console.log('  🔒 Admin password hash updated and persisted.');
-}
-
 const DEFAULT_SETTINGS = {
   store_name: 'CACA STORE',
   store_tagline: 'Premium Deals',
@@ -703,6 +675,34 @@ function resolveCustomerTracking(customer) {
   }
 
   return getLatestActiveOrderForCustomer(customer.id, customer.email);
+}
+
+// ---- Admin password hash: use persisted hash from settings.json if available ----
+function getPersistedAdminHash() {
+  try {
+    if (fs.existsSync(SETTINGS_PATH)) {
+      const raw = fs.readFileSync(SETTINGS_PATH, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (parsed._admin_password_hash && typeof parsed._admin_password_hash === 'string' && parsed._admin_password_hash.startsWith('$2')) {
+        return parsed._admin_password_hash;
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
+function setPersistedAdminHash(hash) {
+  const settings = getSettings();
+  settings._admin_password_hash = hash;
+  fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2));
+}
+
+let ADMIN_PASSWORD_HASH = getPersistedAdminHash();
+if (!ADMIN_PASSWORD_HASH || !bcrypt.compareSync(ADMIN_PASSWORD_RAW, ADMIN_PASSWORD_HASH)) {
+  // Hash changed or first run — persist the new hash
+  ADMIN_PASSWORD_HASH = bcrypt.hashSync(ADMIN_PASSWORD_RAW, 12);
+  setPersistedAdminHash(ADMIN_PASSWORD_HASH);
+  console.log('  🔒 Admin password hash updated and persisted.');
 }
 
 function getSettings() {
