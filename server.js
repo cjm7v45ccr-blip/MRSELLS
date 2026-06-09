@@ -724,6 +724,18 @@ const upload = multer({
 // ============================
 const app = express();
 
+// Redirect HTTPS to HTTP in development (prevents browser HTTPS-first issues)
+app.use((req, res, next) => {
+  if (req.headers['x-forwarded-proto'] === 'https' && NODE_ENV !== 'production') {
+    return res.redirect(`http://${req.headers.host || req.hostname}${req.url}`);
+  }
+  // Also check if the connection is secure (local HTTPS attempts)
+  if (req.secure && NODE_ENV !== 'production') {
+    return res.redirect(`http://${req.headers.host || req.hostname}${req.url}`);
+  }
+  next();
+});
+
 // Security headers — strict CSP, allow only necessary inline scripts
 app.use(helmet({
   contentSecurityPolicy: {
