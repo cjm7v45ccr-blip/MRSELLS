@@ -269,9 +269,21 @@ function getPaymentBadge(ps) {
   return `<span style="display:inline-flex;padding:3px 12px;border-radius:100px;font-size:0.75rem;font-weight:600;${styles[ps] || styles.unpaid}">${cap(ps || 'unpaid').replace('_', ' ')}</span>`;
 }
 
-function exportOrders() {
+async function exportOrders() {
   const filter = $('orderFilter')?.value || 'all';
-  window.open(`/api/admin/orders/export/csv?status=${filter}&token=${AUTH_TOKEN}`, '_blank');
+  try {
+    // Get a short-lived export session token from the server
+    const resp = await fetch('/api/admin/orders/export/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${AUTH_TOKEN}` }
+    });
+    if (!resp.ok) throw new Error('Failed to generate export token');
+    const { token: exportToken } = await resp.json();
+    // Open CSV download using the server-side token (no JWT in URL)
+    window.open(`/api/admin/orders/export/csv?status=${filter}&token=${exportToken}`, '_blank');
+  } catch (e) {
+    showToast('Export Failed', e.message || 'Could not generate export');
+  }
 }
 
 async function openOrderDetail(orderId) {

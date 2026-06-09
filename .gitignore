@@ -9,3 +9,4 @@ uploads
 *.bak
 .DS_Store
 settings.json
+.certs/

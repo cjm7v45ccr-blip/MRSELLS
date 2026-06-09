@@ -2,6 +2,8 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const fs = require('fs');
+const https = require('https');
+const { execSync } = require('child_process');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const helmet = require('helmet');
@@ -18,22 +20,58 @@ const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // ---- ENV VARS (with fallbacks for Render compatibility) ----
-const JWT_SECRET = process.env.JWT_SECRET || process.env.npm_package_name || 'storefront-jwt-secret-change-me';
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@store.com';
-const ADMIN_PASSWORD_RAW = process.env.ADMIN_PASSWORD || 'admin123';
-const ADMIN_PASSWORD_HASH = bcrypt.hashSync(ADMIN_PASSWORD_RAW, 12);
+const JWT_SECRET = process.env.JWT_SECRET;
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ADMIN_PASSWORD_RAW = process.env.ADMIN_PASSWORD;
 
-// Log warnings for placeholder values
-if (JWT_SECRET === 'storefront-jwt-secret-change-me' || ADMIN_PASSWORD_RAW === 'admin123') {
-  console.warn('\n  ⚠️  WARNING: Using default/demo credentials! Set JWT_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD in environment.\n');
+// ---- FAIL-FAST: Require secure env vars in production ----
+if (!JWT_SECRET || JWT_SECRET.length < 32) {
+  console.error('\n  ❌ FATAL: JWT_SECRET is missing or too short. Set a strong JWT_SECRET (32+ chars) in your environment.\n');
+  process.exit(1);
+}
+if (!ADMIN_EMAIL) {
+  console.error('\n  ❌ FATAL: ADMIN_EMAIL is not set. Set it in your environment.\n');
+  process.exit(1);
+}
+if (!ADMIN_PASSWORD_RAW || ADMIN_PASSWORD_RAW.length < 8) {
+  console.error('\n  ❌ FATAL: ADMIN_PASSWORD is missing or too short. Set a strong password (8+ chars) in your environment.\n');
+  process.exit(1);
 }
 
-const CORS_ORIGIN = process.env.CORS_ORIGIN || '';
+const CORS_ORIGIN = process.env.CORS_ORIGIN || (NODE_ENV === 'production' ? 'https://mrsells.onrender.com' : '');
 const UPLOAD_DIR = process.env.UPLOAD_DIR || 'uploads';
 const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE) || 5 * 1024 * 1024;
 const DB_PATH = path.join(__dirname, process.env.DB_PATH || 'store.db');
 const UPLOAD_PATH = path.join(__dirname, UPLOAD_DIR);
 const SETTINGS_PATH = path.join(__dirname, 'settings.json');
+
+// ---- Admin password hash: use persisted hash from settings.json if available ----
+function getPersistedAdminHash() {
+  try {
+    if (fs.existsSync(SETTINGS_PATH)) {
+      const raw = fs.readFileSync(SETTINGS_PATH, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (parsed._admin_password_hash && typeof parsed._admin_password_hash === 'string' && parsed._admin_password_hash.startsWith('$2')) {
+        return parsed._admin_password_hash;
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
+function setPersistedAdminHash(hash) {
+  const settings = getSettings();
+  settings._admin_password_hash = hash;
+  fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2));
+}
+
+let ADMIN_PASSWORD_HASH = getPersistedAdminHash();
+if (!ADMIN_PASSWORD_HASH || !bcrypt.compareSync(ADMIN_PASSWORD_RAW, ADMIN_PASSWORD_HASH)) {
+  // Hash changed or first run — persist the new hash
+  ADMIN_PASSWORD_HASH = bcrypt.hashSync(ADMIN_PASSWORD_RAW, 12);
+  setPersistedAdminHash(ADMIN_PASSWORD_HASH);
+  console.log('  🔒 Admin password hash updated and persisted.');
+}
 
 const DEFAULT_SETTINGS = {
   store_name: 'CACA STORE',
@@ -724,18 +762,6 @@ const upload = multer({
 // ============================
 const app = express();
 
-// Redirect HTTPS to HTTP in development (prevents browser HTTPS-first issues)
-app.use((req, res, next) => {
-  if (req.headers['x-forwarded-proto'] === 'https' && NODE_ENV !== 'production') {
-    return res.redirect(`http://${req.headers.host || req.hostname}${req.url}`);
-  }
-  // Also check if the connection is secure (local HTTPS attempts)
-  if (req.secure && NODE_ENV !== 'production') {
-    return res.redirect(`http://${req.headers.host || req.hostname}${req.url}`);
-  }
-  next();
-});
-
 // Security headers — strict CSP, allow only necessary inline scripts
 app.use(helmet({
   contentSecurityPolicy: {
@@ -769,8 +795,18 @@ const apiLimiter = rateLimit({
 });
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: NODE_ENV === 'production' ? 30 : 500,
+  max: NODE_ENV === 'production' ? 10 : 500,
   message: { error: 'Too many login attempts, please try again later.' }
+});
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: NODE_ENV === 'production' ? 10 : 500,
+  message: { error: 'Too many registration attempts, please try again later.' }
+});
+const orderLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: NODE_ENV === 'production' ? 15 : 500,
+  message: { error: 'Too many order attempts, please try again later.' }
 });
 
 app.use('/api/', apiLimiter);
@@ -943,8 +979,9 @@ app.get('/api/products', (req, res) => {
       sql += ' AND p.featured = 1';
     }
     if (search) {
-      sql += ' AND (p.name LIKE ? OR p.description LIKE ?)';
-      params.push(`%${search}%`, `%${search}%`);
+      const safeSearch = sanitizeSearchTerm(search);
+      sql += ' AND (p.name LIKE ? ESCAPE "\\\" OR p.description LIKE ? ESCAPE "\\")';
+      params.push(`%${safeSearch}%`, `%${safeSearch}%`);
     }
     if (min_price) {
       sql += ' AND p.price >= ?';
@@ -1042,8 +1079,14 @@ app.get('/api/products/:slug/related', (req, res) => {
   }
 });
 
+// Sanitize LIKE search pattern to prevent wildcard abuse
+function sanitizeSearchTerm(term) {
+  if (!term) return '';
+  return String(term).replace(/[%_]/g, m => '\\' + m).slice(0, 200);
+}
+
 // Orders (customer)
-app.post('/api/orders', [
+app.post('/api/orders', orderLimiter, [
   body('customer_name').trim().isLength({ min: 1 }).withMessage('Name is required'),
   body('customer_email').isEmail().normalizeEmail().withMessage('Valid email is required'),
   body('shipping_address').trim().isLength({ min: 1 }).withMessage('Address is required'),
@@ -1333,7 +1376,7 @@ app.put('/api/admin/ratings/:id', authenticateToken, (req, res) => {
 // ============================
 // Customer Routes
 // ============================
-app.post('/api/customers/register', [
+app.post('/api/customers/register', registerLimiter, [
   body('name').trim().isLength({ min: 1 }),
   body('email').isEmail().normalizeEmail(),
   body('password').isLength({ min: 6 })
@@ -1715,8 +1758,9 @@ app.get('/api/admin/products', authenticateToken, (req, res) => {
     const params = [];
 
     if (search) {
-      sql += ' AND (p.name LIKE ? OR p.description LIKE ?)';
-      params.push(`%${search}%`, `%${search}%`);
+      const safeSearch = sanitizeSearchTerm(search);
+      sql += ' AND (p.name LIKE ? ESCAPE "\\")';
+      params.push(`%${safeSearch}%`);
     }
 
     const countSql = sql.replace(/SELECT p\.\*, c\.name as category_name, c\.slug as category_slug/, 'SELECT COUNT(*) as total');
@@ -1927,12 +1971,43 @@ app.put('/api/admin/orders/:id/payment', authenticateToken, [
   }
 });
 
-// Export orders to CSV (also accepts token as query param for window.open)
+// Export orders to CSV (uses server-side session token for secure download)
+const exportTokens = new Map(); // Map<token, { adminEmail, expiresAt }>
+
+// Generate short-lived export token (valid 60 seconds)
+app.post('/api/admin/orders/export/token', authenticateToken, (req, res) => {
+  try {
+    const crypto = require('crypto');
+    const token = crypto.randomBytes(32).toString('hex');
+    exportTokens.set(token, { email: req.admin.email, expiresAt: Date.now() + 60 * 1000 });
+    // Clean up expired tokens
+    for (const [t, data] of exportTokens) {
+      if (Date.now() > data.expiresAt) exportTokens.delete(t);
+    }
+    res.json({ token });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/admin/orders/export/csv', (req, res, next) => {
-  // Allow token via query param for easy export
-  const queryToken = req.query.token;
-  if (queryToken) {
-    req.headers['authorization'] = `Bearer ${queryToken}`;
+  // Validate the export session token instead of using JWT in URL
+  const exportToken = req.query.token;
+  if (!exportToken) {
+    return res.status(401).json({ error: 'Export token required' });
+  }
+  const session = exportTokens.get(exportToken);
+  if (!session || Date.now() > session.expiresAt) {
+    exportTokens.delete(exportToken);
+    return res.status(401).json({ error: 'Invalid or expired export token' });
+  }
+  // Token is valid — consume it (one-time use)
+  exportTokens.delete(exportToken);
+
+  // Now authenticate with JWT via header
+  const authHeader = req.headers['authorization'];
+  if (!authHeader) {
+    return res.status(401).json({ error: 'Authentication required' });
   }
   authenticateToken(req, res, next);
 }, (req, res) => {
@@ -3219,17 +3294,57 @@ app.use((err, req, res, next) => {
 });
 
 // ============================
+// Self-Signed Certificate Generator (development only)
+// ============================
+function generateSelfSignedCert() {
+  const certsDir = path.join(__dirname, '.certs');
+  const keyPath = path.join(certsDir, 'localhost-key.pem');
+  const certPath = path.join(certsDir, 'localhost-cert.pem');
+
+  if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
+    fs.mkdirSync(certsDir, { recursive: true });
+    console.log('  Generating self-signed SSL certificate for local development...');
+    execSync(
+      `openssl req -x509 -newkey rsa:2048 -keyout "${keyPath}" -out "${certPath}" -days 365 -nodes -subj "/CN=localhost" 2>/dev/null`,
+      { stdio: 'pipe' }
+    );
+    console.log('  SSL certificate generated in .certs/');
+  }
+
+  return {
+    key: fs.readFileSync(keyPath),
+    cert: fs.readFileSync(certPath)
+  };
+}
+
+// ============================
 // Start Server
 // ============================
 initDb().then(() => {
-  const HOST = NODE_ENV === 'production' ? '0.0.0.0' : '0.0.0.0';
-  app.listen(PORT, HOST, () => {
-    const addr = NODE_ENV === 'production' ? process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}` : `http://localhost:${PORT}`;
-    console.log(`\n  Storefront Server running at ${addr}`);
-    console.log(`  Environment: ${NODE_ENV}`);
-    console.log(`  Admin Login: ${addr}/admin/login`);
-    console.log(`  Admin Panel: ${addr}/admin\n`);
-  });
+  const HOST = '0.0.0.0';
+
+  if (NODE_ENV === 'production') {
+    // Production: plain HTTP (Render/Traefik handles TLS termination)
+    app.listen(PORT, HOST, () => {
+      const addr = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+      console.log(`\n  Storefront Server running at ${addr}`);
+      console.log(`  Environment: ${NODE_ENV}`);
+      console.log(`  Admin Login: ${addr}/admin/login`);
+      console.log(`  Admin Panel: ${addr}/admin\n`);
+    });
+  } else {
+    // Development: HTTPS with self-signed cert (required for Safari HTTPS-First)
+    const httpsOptions = generateSelfSignedCert();
+    https.createServer(httpsOptions, app).listen(PORT, HOST, () => {
+      console.log(`\n  Storefront Server running at https://localhost:${PORT}`);
+      console.log(`  Environment: ${NODE_ENV}`);
+      console.log(`  Admin Login: https://localhost:${PORT}/admin/login`);
+      console.log(`  Admin Panel: https://localhost:${PORT}/admin`);
+      console.log(`  ℹ️  If your browser warns about the self-signed certificate,`);
+      console.log(`     click "Show Details" → "Visit this website" (Safari)`);
+      console.log(`     or "Advanced" → "Proceed to localhost" (Chrome).\n`);
+    });
+  }
 }).catch(err => {
   console.error('Failed to initialize database:', err);
   process.exit(1);

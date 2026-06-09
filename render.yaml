@@ -1,5 +1,8 @@
 # Render deployment configuration
 # https://render.com/docs/web-services
+#
+# SECURITY: The app will fail to start if ADMIN_EMAIL, ADMIN_PASSWORD, or
+# JWT_SECRET are not set. Set them in the Render Dashboard, NOT in this file.
 
 services:
   - type: web
@@ -13,19 +16,24 @@ services:
         value: production
       - key: PORT
         value: 10000
-      # IMPORTANT: Set these in Render Dashboard under Environment Variables:
+      # REQUIRED — Set these in Render Dashboard → Environment Variables:
       - key: ADMIN_EMAIL
-        sync: false    # Set this in Render dashboard
+        sync: false    # Required: Your admin login email
       - key: ADMIN_PASSWORD
-        sync: false    # Set this in Render dashboard
+        sync: false    # Required: Strong password (8+ chars)
       - key: JWT_SECRET
-        sync: false    # Set this in Render dashboard
+        sync: false    # Required: Generate with: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+      # OPTIONAL — Set if using these features:
+      - key: CORS_ORIGIN
+        value: https://mrsells.onrender.com   # Your store URL
       - key: GEMINI_API_KEY
-        sync: false    # Optional: Set if using AI assistant
+        sync: false    # Optional: AI shopping assistant
       - key: CASH_APP_ENABLED
-        sync: false    # Optional
+        value: "true"  # Optional: Cash App payments
       - key: CASH_APP_CASHTAG
-        sync: false    # Optional
+        sync: false    # Optional: Your $cashtag
+      - key: CASH_APP_PAYMENT_LINK
+        sync: false    # Optional: Custom payment link
     disk:
       name: data
       mountPath: /opt/render/project/src/store-front
